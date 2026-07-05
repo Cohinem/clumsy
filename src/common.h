@@ -1,7 +1,6 @@
 #pragma once
 #include <stdio.h>
 #include <assert.h>
-#include "iup.h"
 #include "windivert.h"
 
 #define CLUMSY_VERSION "0.3"
@@ -110,13 +109,6 @@ PacketNode* insertAfter(PacketNode *node, PacketNode *target);
 PacketNode* appendNode(PacketNode *node);
 short isListEmpty();
 
-// shared ui handlers
-int uiSyncChance(Ihandle *ih);
-int uiSyncToggle(Ihandle *ih, int state);
-int uiSyncInteger(Ihandle *ih);
-int uiSyncFixed(Ihandle *ih);
-int uiSyncInt32(Ihandle *ih);
-
 
 // module
 typedef struct {
@@ -126,7 +118,6 @@ typedef struct {
     const char *displayName; // display name shown in ui
     const char *shortName; // single word name
     short *enabledFlag; // volatile short flag to determine enabled or not
-    Ihandle* (*setupUIFunc)(); // return hbox as controls group
     void (*startUp)(); // called when starting up the module
     void (*closeDown)(PacketNode *head, PacketNode *tail); // called when starting up the module
     short (*process)(PacketNode *head, PacketNode *tail);
@@ -135,7 +126,6 @@ typedef struct {
      */
     short lastEnabled; // if it is enabled on last run
     short processTriggered; // whether this module has been triggered in last step 
-    Ihandle *iconHandle; // store the icon to be updated
 } Module;
 
 extern Module lagModule;
@@ -154,9 +144,6 @@ extern Module* modules[MODULE_CNT]; // all modules in a list
 #define SEND_STATUS_FAIL -1
 extern volatile short sendState;
 
-
-// Iup GUI
-void showStatus(const char* line);
 
 // WinDivert
 int divertStart(const char * filter, char buf[]);
@@ -184,13 +171,6 @@ void endTimePeriod();
 // elevate
 BOOL IsElevated();
 BOOL IsRunAsAdmin();
-BOOL tryElevate(HWND hWnd, BOOL silent);
 
 // icons
 extern const unsigned char icon8x8[8*8];
-
-// parameterized
-extern BOOL parameterized;
-void setFromParameter(Ihandle *ih, const char *field, const char *key);
-BOOL parseArgs(int argc, char* argv[]);
-

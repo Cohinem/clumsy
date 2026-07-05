@@ -1,10 +1,8 @@
 // tampering packet module
-#include "iup.h"
 #include "windivert.h"
 #include "common.h"
 #define NAME "tamper"
 
-static Ihandle *inboundCheckbox, *outboundCheckbox, *chanceInput, *checksumCheckbox;
 
 static volatile short tamperEnabled = 0,
     tamperInbound = 1,
@@ -12,42 +10,6 @@ static volatile short tamperEnabled = 0,
     chance = 1000, // [0 - 10000]
     doChecksum = 1; // recompute checksum after after tampering
 
-static Ihandle* tamperSetupUI() {
-    Ihandle *dupControlsBox = IupHbox(
-        checksumCheckbox = IupToggle("Redo Checksum", NULL),
-        inboundCheckbox = IupToggle("Inbound", NULL),
-        outboundCheckbox = IupToggle("Outbound", NULL),
-        IupLabel("Chance(%):"),
-        chanceInput = IupText(NULL),
-        NULL
-        );
-
-    IupSetAttribute(chanceInput, "VISIBLECOLUMNS", "4");
-    IupSetAttribute(chanceInput, "VALUE", "10.0");
-    IupSetCallback(chanceInput, "VALUECHANGED_CB", uiSyncChance);
-    IupSetAttribute(chanceInput, SYNCED_VALUE, (char*)&chance);
-    IupSetCallback(inboundCheckbox, "ACTION", (Icallback)uiSyncToggle);
-    IupSetAttribute(inboundCheckbox, SYNCED_VALUE, (char*)&tamperInbound);
-    IupSetCallback(outboundCheckbox, "ACTION", (Icallback)uiSyncToggle);
-    IupSetAttribute(outboundCheckbox, SYNCED_VALUE, (char*)&tamperOutbound);
-    // sync doChecksum
-    IupSetCallback(checksumCheckbox, "ACTION", (Icallback)uiSyncToggle);
-    IupSetAttribute(checksumCheckbox, SYNCED_VALUE, (char*)&doChecksum);
-
-    // enable by default to avoid confusing
-    IupSetAttribute(inboundCheckbox, "VALUE", "ON");
-    IupSetAttribute(outboundCheckbox, "VALUE", "ON");
-    IupSetAttribute(checksumCheckbox, "VALUE", "ON");
-
-    if (parameterized) {
-        setFromParameter(inboundCheckbox, "VALUE", NAME"-inbound");
-        setFromParameter(outboundCheckbox, "VALUE", NAME"-outbound");
-        setFromParameter(chanceInput, "VALUE", NAME"-chance");
-        setFromParameter(checksumCheckbox, "VALUE", NAME"-checksum");
-    }
-
-    return dupControlsBox;
-}
 
 // patterns covers every bit
 #define PATTERN_CNT 8
@@ -124,10 +86,9 @@ Module tamperModule = {
     "Tamper",
     NAME,
     (short*)&tamperEnabled,
-    tamperSetupUI,
     tamperStartup,
     tamperCloseDown,
     tamperProcess,
     // runtime fields
-    0, 0, NULL
+    0, 0
 };

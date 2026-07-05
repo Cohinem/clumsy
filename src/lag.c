@@ -1,5 +1,4 @@
 // lagging packets
-#include "iup.h"
 #include "common.h"
 #define NAME "lag"
 #define LAG_MIN "0"
@@ -7,15 +6,13 @@
 #define KEEP_AT_MOST 2000
 // send FLUSH_WHEN_FULL packets when buffer is full
 #define FLUSH_WHEN_FULL 800
-#define LAG_DEFAULT 50
+#define LAG_DEFAULT 10
 
-// don't need a chance
-static Ihandle *inboundCheckbox, *outboundCheckbox, *timeInput;
-
-static volatile short lagEnabled = 0,
+// Hardcoded: enabled, inbound only, 10ms lag
+static volatile short lagEnabled = 1,
     lagInbound = 1,
-    lagOutbound = 1,
-    lagTime = LAG_DEFAULT; // default for 50ms
+    lagOutbound = 0,
+    lagTime = LAG_DEFAULT; // 10ms inbound lag
 
 static PacketNode lagHeadNode = {0}, lagTailNode = {0};
 static PacketNode *bufHead = &lagHeadNode, *bufTail = &lagTailNode;
@@ -25,39 +22,6 @@ static INLINE_FUNCTION short isBufEmpty() {
     short ret = bufHead->next == bufTail;
     if (ret) assert(bufSize == 0);
     return ret;
-}
-
-static Ihandle *lagSetupUI() {
-    Ihandle *lagControlsBox = IupHbox(
-        inboundCheckbox = IupToggle("Inbound", NULL),
-        outboundCheckbox = IupToggle("Outbound", NULL),
-        IupLabel("Delay(ms):"),
-        timeInput = IupText(NULL),
-        NULL
-        );
-
-    IupSetAttribute(timeInput, "VISIBLECOLUMNS", "4");
-    IupSetAttribute(timeInput, "VALUE", STR(LAG_DEFAULT));
-    IupSetCallback(timeInput, "VALUECHANGED_CB", uiSyncInteger);
-    IupSetAttribute(timeInput, SYNCED_VALUE, (char*)&lagTime);
-    IupSetAttribute(timeInput, INTEGER_MAX, LAG_MAX);
-    IupSetAttribute(timeInput, INTEGER_MIN, LAG_MIN);
-    IupSetCallback(inboundCheckbox, "ACTION", (Icallback)uiSyncToggle);
-    IupSetAttribute(inboundCheckbox, SYNCED_VALUE, (char*)&lagInbound);
-    IupSetCallback(outboundCheckbox, "ACTION", (Icallback)uiSyncToggle);
-    IupSetAttribute(outboundCheckbox, SYNCED_VALUE, (char*)&lagOutbound);
-
-    // enable by default to avoid confusing
-    IupSetAttribute(inboundCheckbox, "VALUE", "ON");
-    IupSetAttribute(outboundCheckbox, "VALUE", "ON");
-
-    if (parameterized) {
-        setFromParameter(inboundCheckbox, "VALUE", NAME"-inbound");
-        setFromParameter(outboundCheckbox, "VALUE", NAME"-outbound");
-        setFromParameter(timeInput, "VALUE", NAME"-time");
-    }
-
-    return lagControlsBox;
 }
 
 static void lagStartUp() {
@@ -126,10 +90,9 @@ Module lagModule = {
     "Lag",
     NAME,
     (short*)&lagEnabled,
-    lagSetupUI,
     lagStartUp,
     lagCloseDown,
     lagProcess,
     // runtime fields
-    0, 0, NULL
+    0, 0
 };

@@ -30,50 +30,22 @@ pub fn build(b: *std.build.Builder) void {
 
     debug.print("- out: {s}\n", .{b.exe_dir});
 
-    const tmp_path = b.fmt("tmp/{s}", .{prefix});
-    b.makePath(tmp_path) catch @panic("unable to create tmp directory");
-
     b.installFile(b.fmt("external/{s}/{s}/WinDivert.dll", .{windivert_dir, arch_tag}), b.fmt("{s}/WinDivert.dll", .{prefix}));
     switch (arch) {
         .x64 => b.installFile(b.fmt("external/{s}/{s}/WinDivert64.sys", .{windivert_dir, arch_tag}), b.fmt("{s}/WinDivert64.sys", .{prefix})),
         .x86 => b.installFile(b.fmt("external/{s}/{s}/WinDivert32.sys", .{windivert_dir, arch_tag}), b.fmt("{s}/WinDivert32.sys", .{prefix})),
     }
 
-    b.installFile("etc/config.txt", b.fmt("{s}/config.txt", .{prefix}));
     if (conf == .Ship)
         b.installFile("LICENSE", b.fmt("{s}/License.txt", .{prefix}));
 
-    const res_obj_path = b.fmt("{s}/clumsy_res.obj", .{tmp_path});
+    const exe = b.addExecutable("Riven", null);
 
-    const rc_exe = b.findProgram(&.{
-        "rc",
-    }, &.{
-        b.pathJoin(&.{windows_kit_bin_root, @tagName(arch)}),
-    }) catch @panic("unable to find `rc.exe`, check your windows_kit_bin_root");
-
-    const archFlag = switch (arch) {
-        .x86 => "X86",
-        .x64 => "X64",
-    };
-    const cmd = b.addSystemCommand(&.{
-        rc_exe,
-        "/nologo",
-        "/d",
-        "NDEBUG",
-        "/d",
-        archFlag,
-        "/r",
-        "/fo",
-        res_obj_path,
-        "etc/clumsy.rc",
-    });
-
-    const exe = b.addExecutable("clumsy", null);
-
+    // Always use Windows subsystem to hide console window
     switch (conf) {
         .Debug => {
             exe.setBuildMode(.Debug);
-            exe.subsystem = .Console;
+            exe.subsystem = .Windows;
         },
         .Release => {
             exe.setBuildMode(.ReleaseSafe);
@@ -94,52 +66,36 @@ pub fn build(b: *std.build.Builder) void {
     }) catch unreachable;
     exe.setTarget(target);
 
-    exe.step.dependOn(&cmd.step);
-    exe.addObjectFile(res_obj_path);
-    exe.addCSourceFile("src/bandwidth.c", &.{""});
-    exe.addCSourceFile("src/divert.c", &.{""});
-    exe.addCSourceFile("src/drop.c", &.{""});
-    exe.addCSourceFile("src/duplicate.c", &.{""});
-    exe.addCSourceFile("src/elevate.c", &.{""});
-    exe.addCSourceFile("src/lag.c", &.{""});
-    exe.addCSourceFile("src/main.c", &.{""});
-    exe.addCSourceFile("src/ood.c", &.{""});
-    exe.addCSourceFile("src/packet.c", &.{""});
-    exe.addCSourceFile("src/reset.c", &.{""});
-    exe.addCSourceFile("src/tamper.c", &.{""});
-    exe.addCSourceFile("src/throttle.c", &.{""});
-    exe.addCSourceFile("src/utils.c", &.{""});
-    exe.addCSourceFile("src/utils.c", &.{""});
+    exe.addCSourceFile("src/bandwidth.c", &{""});
+    exe.addCSourceFile("src/divert.c", &{""});
+    exe.addCSourceFile("src/drop.c", &{""});
+    exe.addCSourceFile("src/duplicate.c", &{""});
+    exe.addCSourceFile("src/elevate.c", &{""});
+    exe.addCSourceFile("src/lag.c", &{""});
+    exe.addCSourceFile("src/main.c", &{""});
+    exe.addCSourceFile("src/ood.c", &{""});
+    exe.addCSourceFile("src/packet.c", &{""});
+    exe.addCSourceFile("src/reset.c", &{""});
+    exe.addCSourceFile("src/tamper.c", &{""});
+    exe.addCSourceFile("src/throttle.c", &{""});
+    exe.addCSourceFile("src/utils.c", &{""});
 
     if (arch == .x86)
-        exe.addCSourceFile("etc/chkstk.s", &.{""});
+        exe.addCSourceFile("etc/chkstk.s", &{""});
 
     exe.addIncludeDir(b.fmt("external/{s}/include", .{windivert_dir}));
-
-    const iupLib = switch (arch) {
-        .x64 => "external/iup-3.30_Win64_mingw6_lib",
-        .x86 => "external/iup-3.30_Win32_mingw6_lib",
-    };
-
-    exe.addIncludeDir(b.pathJoin(&.{iupLib, "include"}));
-    exe.addCSourceFile(b.pathJoin(&.{iupLib, "libiup.a"}), &.{""});
 
     exe.linkLibC();
     exe.addLibPath(b.fmt("external/{s}/{s}", .{windivert_dir, arch_tag}));
     exe.linkSystemLibrary("WinDivert");
-    exe.linkSystemLibrary("comctl32");
     exe.linkSystemLibrary("Winmm");
     exe.linkSystemLibrary("ws2_32");
     exe.linkSystemLibrary("kernel32");
-    exe.linkSystemLibrary("gdi32");
-    exe.linkSystemLibrary("comdlg32");
-    exe.linkSystemLibrary("uuid");
-    exe.linkSystemLibrary("ole32");
 
     const exe_install_step = b.addInstallArtifact(exe);  
     if (conf == .Ship)
     {
-        const remove_pdb_step = RemoveOutFile.create(b, "clumsy.pdb");
+        const remove_pdb_step = RemoveOutFile.create(b, "Riven.pdb");
         remove_pdb_step.step.dependOn(&exe_install_step.step);
         b.getInstallStep().dependOn(&remove_pdb_step.step);
     }

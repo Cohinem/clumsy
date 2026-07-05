@@ -1,12 +1,10 @@
 // out of order arrange packets module
-#include "iup.h"
 #include "common.h"
 #define NAME "ood"
 // keep a picked packet at most for KEEP_TURNS_MAX steps, or if there's no following
 // one, it will just be sent
 #define KEEP_TURNS_MAX 10 
 
-static Ihandle *inboundCheckbox, *outboundCheckbox, *chanceInput;
 
 static volatile short oodEnabled = 0,
     oodInbound = 1, oodOutbound = 1,
@@ -14,36 +12,6 @@ static volatile short oodEnabled = 0,
 static PacketNode *oodPacket = NULL;
 static int giveUpCnt;
 
-static Ihandle *oodSetupUI() {
-    Ihandle *oodControlsBox = IupHbox(
-        inboundCheckbox = IupToggle("Inbound", NULL),
-        outboundCheckbox = IupToggle("Outbound", NULL),
-        IupLabel("Chance(%):"),
-        chanceInput = IupText(NULL),
-        NULL
-    );
-
-    IupSetAttribute(chanceInput, "VISIBLECOLUMNS", "4");
-    IupSetAttribute(chanceInput, "VALUE", "10.0");
-    IupSetCallback(chanceInput, "VALUECHANGED_CB", uiSyncChance);
-    IupSetAttribute(chanceInput, SYNCED_VALUE, (char*)&chance);
-    IupSetCallback(inboundCheckbox, "ACTION", (Icallback)uiSyncToggle);
-    IupSetAttribute(inboundCheckbox, SYNCED_VALUE, (char*)&oodInbound);
-    IupSetCallback(outboundCheckbox, "ACTION", (Icallback)uiSyncToggle);
-    IupSetAttribute(outboundCheckbox, SYNCED_VALUE, (char*)&oodOutbound);
-
-    // enable by default to avoid confusing
-    IupSetAttribute(inboundCheckbox, "VALUE", "ON");
-    IupSetAttribute(outboundCheckbox, "VALUE", "ON");
-
-    if (parameterized) {
-        setFromParameter(inboundCheckbox, "VALUE", NAME"-inbound");
-        setFromParameter(outboundCheckbox, "VALUE", NAME"-outbound");
-        setFromParameter(chanceInput, "VALUE", NAME"-chance");
-    }
-
-    return oodControlsBox;
-}
 
 static void oodStartUp() {
     LOG("ood enabled");
@@ -143,10 +111,9 @@ Module oodModule = {
     "Out of order",
     NAME,
     (short*)&oodEnabled,
-    oodSetupUI,
     oodStartUp,
     oodCloseDown,
     oodProcess,
     // runtime fields
-    0, 0, NULL
+    0, 0
 };

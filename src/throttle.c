@@ -1,5 +1,4 @@
 // throttling packets
-#include "iup.h"
 #include "common.h"
 #define NAME "throttle"
 #define TIME_MIN "0"
@@ -8,7 +7,6 @@
 // threshold for how many packet to throttle at most
 #define KEEP_AT_MOST 1000
 
-static Ihandle *inboundCheckbox, *outboundCheckbox, *chanceInput, *frameInput, *dropThrottledCheckbox;
 
 static volatile short throttleEnabled = 0,
     throttleInbound = 1, throttleOutbound = 1,
@@ -29,50 +27,7 @@ static INLINE_FUNCTION short isBufEmpty() {
     return ret;
 }
 
-static Ihandle *throttleSetupUI() {
-    Ihandle *throttleControlsBox = IupHbox(
-        dropThrottledCheckbox = IupToggle("Drop Throttled", NULL),
-        IupLabel("Timeframe(ms):"),
-        frameInput = IupText(NULL),
-        inboundCheckbox = IupToggle("Inbound", NULL),
-        outboundCheckbox = IupToggle("Outbound", NULL),
-        IupLabel("Chance(%):"),
-        chanceInput = IupText(NULL),
-        NULL
-        );
 
-    IupSetAttribute(chanceInput, "VISIBLECOLUMNS", "4");
-    IupSetAttribute(chanceInput, "VALUE", "10.0");
-    IupSetCallback(chanceInput, "VALUECHANGED_CB", uiSyncChance);
-    IupSetAttribute(chanceInput, SYNCED_VALUE, (char*)&chance);
-    IupSetCallback(inboundCheckbox, "ACTION", (Icallback)uiSyncToggle);
-    IupSetAttribute(inboundCheckbox, SYNCED_VALUE, (char*)&throttleInbound);
-    IupSetCallback(outboundCheckbox, "ACTION", (Icallback)uiSyncToggle);
-    IupSetAttribute(outboundCheckbox, SYNCED_VALUE, (char*)&throttleOutbound);
-    IupSetCallback(dropThrottledCheckbox, "ACTION", (Icallback)uiSyncToggle);
-    IupSetAttribute(dropThrottledCheckbox, SYNCED_VALUE, (char*)&dropThrottled);
-
-    // sync throttle packet number
-    IupSetAttribute(frameInput, "VISIBLECOLUMNS", "3");
-    IupSetAttribute(frameInput, "VALUE", STR(TIME_DEFAULT));
-    IupSetCallback(frameInput, "VALUECHANGED_CB", (Icallback)uiSyncInteger);
-    IupSetAttribute(frameInput, SYNCED_VALUE, (char*)&throttleFrame);
-    IupSetAttribute(frameInput, INTEGER_MAX, TIME_MAX);
-    IupSetAttribute(frameInput, INTEGER_MIN, TIME_MIN);
-
-    // enable by default to avoid confusing
-    IupSetAttribute(inboundCheckbox, "VALUE", "ON");
-    IupSetAttribute(outboundCheckbox, "VALUE", "ON");
-
-    if (parameterized) {
-        setFromParameter(inboundCheckbox, "VALUE", NAME"-inbound");
-        setFromParameter(outboundCheckbox, "VALUE", NAME"-outbound");
-        setFromParameter(chanceInput, "VALUE", NAME"-chance");
-        setFromParameter(frameInput, "VALUE", NAME"-frame");
-    }
-
-    return throttleControlsBox;
-}
 
 static void throttleStartUp() {
     if (bufHead->next == NULL && bufTail->next == NULL) {
@@ -159,10 +114,9 @@ Module throttleModule = {
     "Throttle",
     NAME,
     (short*)&throttleEnabled,
-    throttleSetupUI,
     throttleStartUp,
     throttleCloseDown,
     throttleProcess,
     // runtime fields
-    0, 0, NULL
+    0, 0
 };

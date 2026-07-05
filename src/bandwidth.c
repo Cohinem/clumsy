@@ -3,7 +3,6 @@
 #include <Windows.h>
 #include <stdint.h>
 
-#include "iup.h"
 #include "common.h"
 
 #define NAME "bandwidth"
@@ -43,7 +42,6 @@ int32_t crate_stats_calculate(CRateStats *rate, uint32_t now_ts);
 //---------------------------------------------------------------------
 // configuration
 //---------------------------------------------------------------------
-static Ihandle *inboundCheckbox, *outboundCheckbox, *bandwidthInput;
 
 static volatile short bandwidthEnabled = 0,
     bandwidthInbound = 1, bandwidthOutbound = 1;
@@ -52,38 +50,6 @@ static volatile LONG bandwidthLimit = BANDWIDTH_DEFAULT;
 static CRateStats *rateStats = NULL;
 
 
-static Ihandle* bandwidthSetupUI() {
-    Ihandle *bandwidthControlsBox = IupHbox(
-        inboundCheckbox = IupToggle("Inbound", NULL),
-        outboundCheckbox = IupToggle("Outbound", NULL),
-        IupLabel("Limit(KB/s):"),
-        bandwidthInput = IupText(NULL),
-        NULL
-    );
-
-    IupSetAttribute(bandwidthInput, "VISIBLECOLUMNS", "4");
-    IupSetAttribute(bandwidthInput, "VALUE", STR(BANDWIDTH_DEFAULT));
-    IupSetCallback(bandwidthInput, "VALUECHANGED_CB", uiSyncInt32);
-    IupSetAttribute(bandwidthInput, SYNCED_VALUE, (char*)&bandwidthLimit);
-    IupSetAttribute(bandwidthInput, INTEGER_MAX, BANDWIDTH_MAX);
-    IupSetAttribute(bandwidthInput, INTEGER_MIN, BANDWIDTH_MIN);
-    IupSetCallback(inboundCheckbox, "ACTION", (Icallback)uiSyncToggle);
-    IupSetAttribute(inboundCheckbox, SYNCED_VALUE, (char*)&bandwidthInbound);
-    IupSetCallback(outboundCheckbox, "ACTION", (Icallback)uiSyncToggle);
-    IupSetAttribute(outboundCheckbox, SYNCED_VALUE, (char*)&bandwidthOutbound);
-
-    // enable by default to avoid confusing
-    IupSetAttribute(inboundCheckbox, "VALUE", "ON");
-    IupSetAttribute(outboundCheckbox, "VALUE", "ON");
-
-    if (parameterized) {
-        setFromParameter(inboundCheckbox, "VALUE", NAME"-inbound");
-        setFromParameter(outboundCheckbox, "VALUE", NAME"-outbound");
-        setFromParameter(bandwidthInput, "VALUE", NAME"-bandwidth");
-    }
-
-    return bandwidthControlsBox;
-}
 
 static void bandwidthStartUp() {
 	if (rateStats) crate_stats_delete(rateStats);
@@ -148,12 +114,11 @@ Module bandwidthModule = {
     "Bandwidth",
     NAME,
     (short*)&bandwidthEnabled,
-    bandwidthSetupUI,
     bandwidthStartUp,
     bandwidthCloseDown,
     bandwidthProcess,
     // runtime fields
-    0, 0, NULL
+    0, 0
 };
 
 
