@@ -20,7 +20,7 @@ jobs:
         with:
           version: 0.9.1
 
-      - name: Build Clumsy (x64 & x86)
+      - name: Build Clumsy (x64 Variant A)
         shell: pwsh
         run: |
           # Search for rc.exe under the Windows Kits directory to find the SDK version dynamically
