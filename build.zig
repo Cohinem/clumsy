@@ -66,22 +66,22 @@ pub fn build(b: *std.build.Builder) void {
     }) catch unreachable;
     exe.setTarget(target);
 
-    exe.addCSourceFile("src/bandwidth.c", &{""});
-    exe.addCSourceFile("src/divert.c", &{""});
-    exe.addCSourceFile("src/drop.c", &{""});
-    exe.addCSourceFile("src/duplicate.c", &{""});
-    exe.addCSourceFile("src/elevate.c", &{""});
-    exe.addCSourceFile("src/lag.c", &{""});
-    exe.addCSourceFile("src/main.c", &{""});
-    exe.addCSourceFile("src/ood.c", &{""});
-    exe.addCSourceFile("src/packet.c", &{""});
-    exe.addCSourceFile("src/reset.c", &{""});
-    exe.addCSourceFile("src/tamper.c", &{""});
-    exe.addCSourceFile("src/throttle.c", &{""});
-    exe.addCSourceFile("src/utils.c", &{""});
+    exe.addCSourceFile("src/bandwidth.c", &.{""});
+    exe.addCSourceFile("src/divert.c", &.{""});
+    exe.addCSourceFile("src/drop.c", &.{""});
+    exe.addCSourceFile("src/duplicate.c", &.{""});
+    exe.addCSourceFile("src/elevate.c", &.{""});
+    exe.addCSourceFile("src/lag.c", &.{""});
+    exe.addCSourceFile("src/main.c", &.{""});
+    exe.addCSourceFile("src/ood.c", &.{""});
+    exe.addCSourceFile("src/packet.c", &.{""});
+    exe.addCSourceFile("src/reset.c", &.{""});
+    exe.addCSourceFile("src/tamper.c", &.{""});
+    exe.addCSourceFile("src/throttle.c", &.{""});
+    exe.addCSourceFile("src/utils.c", &.{""});
 
     if (arch == .x86)
-        exe.addCSourceFile("etc/chkstk.s", &{""});
+        exe.addCSourceFile("etc/chkstk.s", &.{""});
 
     exe.addIncludeDir(b.fmt("external/{s}/include", .{windivert_dir}));
 
