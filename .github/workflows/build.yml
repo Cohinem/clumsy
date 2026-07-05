@@ -34,11 +34,8 @@ jobs:
             Write-Host "Warning: rc.exe not found under Windows Kits, using default path in build.zig."
           }
           
-          Write-Host "Building x64 Ship Release..."
-          zig build -Darch=x64 -Dconf=Ship @extraArgs
-          
-          Write-Host "Building x86 Ship Release..."
-          zig build -Darch=x86 -Dconf=Ship @extraArgs
+          Write-Host "Building x64 Ship Release (Sign A)..."
+          zig build -Dconf=Ship -Darch=x64 -Dsign=A @extraArgs
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
