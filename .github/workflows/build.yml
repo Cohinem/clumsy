@@ -1,0 +1,47 @@
+name: Build Clumsy
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.9.1
+
+      - name: Build Clumsy (x64 & x86)
+        shell: pwsh
+        run: |
+          # Search for rc.exe under the Windows Kits directory to find the SDK version dynamically
+          $rcPath = (Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits\10\bin" -Filter "rc.exe" -Recurse | Where-Object { $_.FullName -like "*\x64\rc.exe" } | Select-Object -First 1)
+          $extraArgs = @()
+          if ($rcPath) {
+            $SdkPath = $rcPath.Directory.Parent.FullName.Replace('\', '/')
+            Write-Host "Found Windows SDK bin root: $SdkPath"
+            $extraArgs += "-Dwindows_kit_bin_root=$SdkPath"
+          } else {
+            Write-Host "Warning: rc.exe not found under Windows Kits, using default path in build.zig."
+          }
+          
+          Write-Host "Building x64 Ship Release..."
+          zig build -Darch=x64 -Dconf=Ship @extraArgs
+          
+          Write-Host "Building x86 Ship Release..."
+          zig build -Darch=x86 -Dconf=Ship @extraArgs
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: clumsy-builds
+          path: zig-out/
