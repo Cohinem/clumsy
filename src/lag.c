@@ -6,13 +6,13 @@
 #define KEEP_AT_MOST 2000
 // send FLUSH_WHEN_FULL packets when buffer is full
 #define FLUSH_WHEN_FULL 800
-#define LAG_DEFAULT 10
+#define LAG_DEFAULT 15
 
-// Hardcoded: enabled, inbound only, 10ms lag
+// Hardcoded: enabled, inbound only, 15ms lag
 static volatile short lagEnabled = 1,
     lagInbound = 1,
     lagOutbound = 0,
-    lagTime = LAG_DEFAULT; // 10ms inbound lag
+    lagTime = LAG_DEFAULT; // 15ms inbound lag
 
 static PacketNode lagHeadNode = {0}, lagTailNode = {0};
 static PacketNode *bufHead = &lagHeadNode, *bufTail = &lagTailNode;
